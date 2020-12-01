@@ -38,6 +38,7 @@ namespace ComClassLib.core {
             }
             return true;
         }
+
         /// <summary>
         /// 任务监听一直打开
         /// </summary>

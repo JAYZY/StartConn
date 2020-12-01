@@ -31,6 +31,7 @@
             this.rTxtBoxTip = new System.Windows.Forms.RichTextBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.btnClose = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -51,12 +52,12 @@
             this.btnMinium.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.btnMinium.Image = ((System.Drawing.Image)(resources.GetObject("btnMinium.Image")));
             this.btnMinium.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.btnMinium.Location = new System.Drawing.Point(658, 0);
+            this.btnMinium.Location = new System.Drawing.Point(611, 0);
             this.btnMinium.Name = "btnMinium";
             this.btnMinium.Size = new System.Drawing.Size(43, 42);
             this.btnMinium.TabIndex = 1;
             this.btnMinium.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.toolTip1.SetToolTip(this.btnMinium, "最小化服务（强行关闭请用快捷键）");
+            this.toolTip1.SetToolTip(this.btnMinium, "最小化服务");
             this.btnMinium.UseVisualStyleBackColor = true;
             this.btnMinium.Click += new System.EventHandler(this.btnMinium_Click);
             // 
@@ -78,12 +79,29 @@
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.DoubleClick += new System.EventHandler(this.notifyIcon1_DoubleClick);
             // 
+            // btnClose
+            // 
+            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClose.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnClose.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnClose.Image = ((System.Drawing.Image)(resources.GetObject("btnClose.Image")));
+            this.btnClose.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btnClose.Location = new System.Drawing.Point(658, 0);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(43, 42);
+            this.btnClose.TabIndex = 4;
+            this.btnClose.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.toolTip1.SetToolTip(this.btnClose, "关闭系统");
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
             // MainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(701, 314);
             this.ControlBox = false;
+            this.Controls.Add(this.btnClose);
             this.Controls.Add(this.rTxtBoxTip);
             this.Controls.Add(this.btnMinium);
             this.Controls.Add(this.label1);
@@ -92,6 +110,7 @@
             this.Name = "MainFrm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "# 一杆一档存储服务 #";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFrm_FormClosing);
             this.Shown += new System.EventHandler(this.MainFrm_Shown);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -105,6 +124,7 @@
         private System.Windows.Forms.RichTextBox rTxtBoxTip;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Button btnClose;
     }
 }
 

@@ -8,6 +8,7 @@ namespace OnePoleOneSave {
         #region 创建单实例对象
         private static MainFrm _frmParent;
         private static object _obj = new object();
+
         public static MainFrm GetInstance() {
             if (_frmParent == null) {
                 lock (_obj) {
@@ -18,13 +19,13 @@ namespace OnePoleOneSave {
             }
             return _frmParent;
         }
-
+        TaskM taskM = null;
         private MainFrm() {
             InitializeComponent();
 
             TaskM.CallInfo = ShowTaskMsg;
-            TaskM taskM = new TaskM();
-            Task.Run(() => { taskM.ListenTaskStart(); });
+            taskM = new TaskM();
+            Task.Run(() => { taskM.ListenTask(); });
             //taskM.ListenTaskStart();       
         }
         #endregion
@@ -46,7 +47,7 @@ namespace OnePoleOneSave {
                         sTip = $"# {DateTime.Now.ToString()} : ";
                     }
                     sTip += tmpStr[1];
-                    rTxtBoxTip.AppendText(sTip );
+                    rTxtBoxTip.AppendText(sTip);
                     rTxtBoxTip.ScrollToCaret();
                 } catch { }
             }
@@ -63,6 +64,42 @@ namespace OnePoleOneSave {
 
         private void MainFrm_Shown(object sender, EventArgs e) {
             this.Visible = false;
+        }
+
+        private void btnClose_Click(object sender, EventArgs e) {
+            this.Close();
+        }
+        bool isClose = false;
+        private void MainFrm_FormClosing(object sender, FormClosingEventArgs e) {
+            if (!isClose) {
+                ExitWarning exitW = new ExitWarning();
+                DialogResult dr = exitW.ShowDialog();
+                if (dr == DialogResult.OK) {
+                    isClose = true;
+                    Application.Exit();
+
+                } else {
+                    isClose = false;
+                    e.Cancel = true;
+                }
+            }
+        }
+
+        private void buttonX1_Click(object sender, EventArgs e) {
+            ImgSaveNode imgNode = new ImgSaveNode();
+            imgNode.minImgTimeStamp = 132430780617149500;
+            imgNode.maxImgTimeStamp = 132430780696989500;
+            imgNode.sKM_Pole = "115600414_K5778_Z2-25_6_13";
+            imgNode.StationName = "safkw-sadfkji";
+            imgNode.lstImgId = new System.Collections.Generic.List<string>();
+            imgNode.lstImgId.Add("123234");
+            imgNode.lstImgId.Add("345erts");
+            imgNode.lstImgId.Add("adf2314");
+            imgNode.lstImgId.Add("abad34123");
+            imgNode.lstImgId.Add("asdflk192jsdf");
+            imgNode.lstImgId.Add("3454592jsdf");
+            string str = ComClassLib.FileOp.JsonHelper.GetJson(imgNode);
+            MessageBox.Show(str);
         }
     }
 }
