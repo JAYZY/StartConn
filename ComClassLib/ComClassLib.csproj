@@ -88,6 +88,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="core\NetworkHelper.cs" />
     <Compile Include="core\PicInfo.cs" />
     <Compile Include="core\Crypto.cs" />
     <Compile Include="core\FigHandlingOverlay.cs" />
@@ -100,6 +101,7 @@
     <Compile Include="CtrlView.Designer.cs">
       <DependentUpon>CtrlView.cs</DependentUpon>
     </Compile>
+    <Compile Include="DataType.cs" />
     <Compile Include="DB\DataSetHelper.cs" />
     <Compile Include="DB\DBM.cs" />
     <Compile Include="DB\RedisHelper.cs" />

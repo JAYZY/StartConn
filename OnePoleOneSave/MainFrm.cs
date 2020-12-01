@@ -18,16 +18,14 @@ namespace OnePoleOneSave {
             }
             return _frmParent;
         }
-        
+
         private MainFrm() {
             InitializeComponent();
-            
+
             TaskM.CallInfo = ShowTaskMsg;
             TaskM taskM = new TaskM();
             Task.Run(() => { taskM.ListenTaskStart(); });
-            //taskM.ListenTaskStart();
-           
-
+            //taskM.ListenTaskStart();       
         }
         #endregion
         private void ShowTaskMsg(string sMsg) {
@@ -37,10 +35,18 @@ namespace OnePoleOneSave {
             } else {
                 try {
                     if (rTxtBoxTip.Lines.Length > 30) {
-                        rTxtBoxTip.Clear();
+                        int start = rTxtBoxTip.GetFirstCharIndexFromLine(0);//第一行第一个字符的bai索引du
+                        int end = rTxtBoxTip.GetFirstCharIndexFromLine(1);//第二行第一个字符的索引
+                        rTxtBoxTip.Select(start, end);//选中第一行
+                        rTxtBoxTip.SelectedText = "";//设置第一行的内容为空
                     }
-                    string sTip = $"# {DateTime.Now.ToString()} : {sMsg}";
-                    rTxtBoxTip.AppendText(sTip + "\n");
+                    string[] tmpStr = sMsg.Split('#');
+                    string sTip = "";
+                    if (tmpStr[0].Equals("T")) {//添加时间
+                        sTip = $"# {DateTime.Now.ToString()} : ";
+                    }
+                    sTip += tmpStr[1];
+                    rTxtBoxTip.AppendText(sTip );
                     rTxtBoxTip.ScrollToCaret();
                 } catch { }
             }

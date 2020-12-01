@@ -36,8 +36,7 @@ namespace ComClassLib.FileOp {
         /// <typeparam name="T">类型</typeparam>
         /// <param name="json">json字符串</param>
         /// <returns></returns>
-        public static T GetModel<T>(string json) {
-            
+        public static T GetModel<T>(string json) {          
            
             //var tt = JsonConvert.DeserializeObject(json);
             //Console.WriteLine(tt.ToString());

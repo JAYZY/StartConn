@@ -38,7 +38,7 @@ namespace ComClassLib.DB {
         /// <summary>
         /// 锁
         /// </summary>
-        private static readonly object Locker = new object();
+        private static object Locker = new object();
         /// <summary>
         /// 数据库访问对象
         /// </summary>
@@ -75,14 +75,14 @@ namespace ComClassLib.DB {
         static RedisHelper() {
             ServIP = Settings.Default.DbServIP;
             Port = Settings.Default.Port;
-            ConfigurationOptions config = new ConfigurationOptions() {
+            config = new ConfigurationOptions() {
                 EndPoints = { { ServIP, Port } },
                 AllowAdmin = true,
                 ConnectTimeout = 1000 //超时设置1s
             };
-            _connMultiplexer = ConnectionMultiplexer.Connect(config);
+            //_connMultiplexer = ConnectionMultiplexer.Connect(config);
             DefaultKey = "";
-            RegisterEvent();
+            //RegisterEvent();
         }
 
 
@@ -137,15 +137,34 @@ namespace ComClassLib.DB {
         }
         public static bool IsConnect {
             get {
-                bool res = true;
+
+                bool res = false;
                 try {
-                    res = _connMultiplexer.IsConnected;
+                    if (_connMultiplexer != null) {
+                        res = _connMultiplexer.IsConnected;
+                    }
                 } catch (Exception) {
                     res = false;
 
                 }
                 return res;
             }
+        }
+        public static bool ReConnect() {
+            if (_connMultiplexer != null && _connMultiplexer.IsConnected) {
+                return true;
+            }
+            lock (Locker) {
+                if (_connMultiplexer != null && _connMultiplexer.IsConnected) {
+                    return true;
+                }
+
+                if (_connMultiplexer != null) {
+                    _connMultiplexer.Dispose();
+                }
+                _connMultiplexer = ConnectionMultiplexer.Connect(config);
+            }
+            return _connMultiplexer.IsConnected;
         }
         /// <summary>
         /// 添加 key 的前缀
@@ -201,9 +220,35 @@ namespace ComClassLib.DB {
         /// </summary>
         /// <param name="db">要获取的数据库ID</param>
         public RedisHelper(int db = -1) {
-            _db = _connMultiplexer.GetDatabase(db);
 
+            IConnectionMultiplexer conMulti = GetConnection();
+            if (conMulti != null && conMulti.IsConnected) {
+                _db = _connMultiplexer.GetDatabase(db);
+            }
         }
+        /// <summary>
+        /// 获取连接
+        /// </summary>
+        /// <returns></returns>
+        protected IConnectionMultiplexer GetConnection() {
+            if (_connMultiplexer != null && _connMultiplexer.IsConnected) {
+                return _connMultiplexer;
+            }
+            lock (Locker) {
+                if (_connMultiplexer != null && _connMultiplexer.IsConnected) {
+                    return _connMultiplexer;
+                }
+
+                if (_connMultiplexer != null) {
+                    _connMultiplexer.Dispose();
+                }
+                _connMultiplexer = ConnectionMultiplexer.Connect(config);
+            }
+
+            return _connMultiplexer;
+        }
+
+
 
         #region stringGet 
         /// <summary>
@@ -237,7 +282,7 @@ namespace ComClassLib.DB {
             try {
                 redisKey = AddKeyPrefix(redisKey);
                 return _db.StringGet(redisKey);
-            } catch (TypeAccessException ex) {
+            } catch (TypeAccessException) {
                 return null;
             }
         }
@@ -1104,6 +1149,17 @@ namespace ComClassLib.DB {
             _connMultiplexer.HashSlotMoved += ConnMultiplexer_HashSlotMoved;
             _connMultiplexer.InternalError += ConnMultiplexer_InternalError;
             _connMultiplexer.ConfigurationChangedBroadcast += ConnMultiplexer_ConfigurationChangedBroadcast;
+        }
+        private static void DeleteEvent() {
+            try {
+                _connMultiplexer.ConnectionRestored -= ConnMultiplexer_ConnectionRestored;
+                _connMultiplexer.ConnectionFailed -= ConnMultiplexer_ConnectionFailed;
+                _connMultiplexer.ErrorMessage -= ConnMultiplexer_ErrorMessage;
+                _connMultiplexer.ConfigurationChanged -= ConnMultiplexer_ConfigurationChanged;
+                _connMultiplexer.HashSlotMoved -= ConnMultiplexer_HashSlotMoved;
+                _connMultiplexer.InternalError -= ConnMultiplexer_InternalError;
+                _connMultiplexer.ConfigurationChangedBroadcast -= ConnMultiplexer_ConfigurationChangedBroadcast;
+            } catch { }
         }
         /// <summary>
         /// 重新配置广播时(主从同步更改)

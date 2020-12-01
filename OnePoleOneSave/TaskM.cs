@@ -15,6 +15,7 @@ namespace OnePoleOneSave {
     public class TaskM {
 
         #region 静态参数定义
+        private static readonly int m_sTYDataId;                        //与唐源数据库匹配的信息存储
         private static readonly int m_sInfoDbIdx;                       //图像信息数据库Id:
         private static readonly int m_sImgDbId;                         //图像二进制存储数据库Id
         private static readonly int m_sAIFaultDbId;                     //智能识别缺陷数据库Id
@@ -28,6 +29,7 @@ namespace OnePoleOneSave {
 
         //静态构造函数
         static TaskM() {
+            m_sTYDataId = 8;                                                //唐源数据匹配信息存储库Id
             m_sGeoDbId = 9;                                                 //几何参数存储数据库Id
             m_sImgDbId = 10;                                                //图像二进制存储数据库Id
             m_sInfoDbIdx = 11;                                              //图像信息数据库Id
@@ -46,7 +48,7 @@ namespace OnePoleOneSave {
 
         #region 属性定义
         private RedisHelper imgDB; //图像数据库
-        private RedisHelper imgInfoDB; //图像信息数据库        
+        private RedisHelper imgInfoDB, TYData; //图像信息数据库        
         private long _iImgInd, _iTotalSaveNum;//当前图像id，当前定位id,当前缺陷id，当前删除图像id
 
 
@@ -65,6 +67,7 @@ namespace OnePoleOneSave {
         public SqliteHelper CurrSubDb { get; set; }
         public SqliteHelper IndexDb { get; set; }
         private string TaskPath { get; set; }
+     
         private string CurrPoleNum { get; set; }
         //节点队列
         private Queue<ImgSaveNode> queImgInfo = null;
@@ -86,8 +89,8 @@ namespace OnePoleOneSave {
             _tokenSource = new CancellationTokenSource();
             _token = _tokenSource.Token;
             _resetEvent = new ManualResetEvent(true);
-            //_mongodb = new MongodbAccessImpl(Settings.Default.mongoDbIp, Settings.Default.mongoDbPort);
-
+            _mongodb = new MongodbAccessImpl(Settings.Default.mongoDbIp, Settings.Default.mongoDbPort);
+            _taskRunning = false;
         }
 
         bool isStop = false;
@@ -101,23 +104,25 @@ namespace OnePoleOneSave {
                 //找到比当前时间戳大的定位信息132430780599149500 132430780617149500 132430780678989500 132430780696989500
                 List<BsonDocument> lstImgInfos = new List<BsonDocument>();
                 try {
-                  lstImgInfos = _mongodb.FindDataByLimit(imgTimeStamp, 1000);//132429982497195159
+                    lstImgInfos = _mongodb.FindDataByLimit(imgTimeStamp, 100);//132429982497195159
                 } catch {
                 }
-                if (lstImgInfos == null || lstImgInfos.Count <= 1) {
+                if (lstImgInfos == null || lstImgInfos.Count < 1) {
                     //检查是否停止  132433202798556000 132433202807556000 132433202891446000 132433203258796000 132433203267796000 132433203294806000
                     try {
-                        CallInfo?.Invoke($"--> 检查任务是否停止1");
+                        CallInfo?.Invoke($"#--- 等待任务数据......");
                         if (!_mongodb.Connect()) {
                             isStop = true;
+                            CallInfo?.Invoke($"#--- 检测任务数据库连接失败!");
                             break;
                         }
                     } catch {
 
                     }
-                    //read Stop()
+                    continue;
                 }
-                if (lstImgInfos == null) continue;
+                // if (lstImgInfos == null)
+
                 for (int i = 0; i < lstImgInfos.Count; i++) {
                     var imgInfo = lstImgInfos[i];
                     string sPoleNum = imgInfo.GetValue("基础支柱号").AsString;
@@ -126,8 +131,7 @@ namespace OnePoleOneSave {
                         imgNode.minImgTimeStamp = imgTimeStamp;
                         CurrPoleNum = sPoleNum;
                         continue;
-                    }
-                    if (CurrPoleNum != sPoleNum) { //如果不相等 改变当前支柱号和 获取目录    
+                    } else if (CurrPoleNum != sPoleNum) { //如果不相等 改变当前支柱号和 获取目录    
                         imgNode.StationName = imgInfo.GetValue("StationName").AsString;
                         imgNode.sKM_Pole = $"{imgInfo.GetValue("公里标（米）").ToString()}_{sPoleNum}"; //公里标_杆号
                         imgTimeStamp = imgInfo.GetValue("检测时间").AsInt64;
@@ -135,23 +139,27 @@ namespace OnePoleOneSave {
                         CurrPoleNum = sPoleNum;
                         lock (obj) {
                             queImgInfo.Enqueue(imgNode);
+                            //写入 redis
+                            string strJson = JsonHelper.GetJson(imgNode);
+                            imgInfoDB.StringSet(imgNode.sKM_Pole, strJson);
                         }
                         imgNode = new ImgSaveNode();
                         imgNode.minImgTimeStamp = imgTimeStamp;
-
                         break;
+                    } else {
+                        imgTimeStamp = imgInfo.GetValue("检测时间").AsInt64;//更新检测时间
                     }
-                    imgTimeStamp = imgInfo.GetValue("检测时间").AsInt64;
                 }
             }
         }
 
-        //任务2，不断读取节点信息存储并匹配吊弦图像
+        //任务2，不断读取Redis节点信息存储并匹配吊弦图像
         private void TaskMatchImg() {
             ImgSaveNode imgNode;
             CallInfo?.Invoke($"--> 读取吊弦数据");
             //直到有值为止
             while (queImgInfo.Count == 0) {
+                //
                 Thread.Sleep(1000);//休眠10秒
             }
 
@@ -165,6 +173,12 @@ namespace OnePoleOneSave {
                 bool redisConn = false;
                 while (!redisConn) {
                     try {
+                        if (RedisHelper.IsConnect) {
+                            if (!RedisHelper.ReConnect()) {
+                                Thread.Sleep(1000);//休息1秒重试
+                                continue;
+                            }
+                        }
                         string lsImgInd = imgInfoDB.StringGet("LstImgInd");
                         if (string.IsNullOrEmpty(lsImgInd)) {
                             _iImgInd = 0;
@@ -174,6 +188,7 @@ namespace OnePoleOneSave {
                     } catch (Exception) {
                         _iImgInd = 0;
                         redisConn = false;
+
                     }
                 }
 
@@ -249,114 +264,66 @@ namespace OnePoleOneSave {
 
         //任务：监听任务是否开始。
         public void ListenTaskStart() {
-            //查找数据库监听任务状态
+            //Redis服务器和数据库监听任务状态
+
             while (true) {
                 try {
+                    CallInfo?.Invoke("T#连接【吊弦服务器(数据库)】...... ");
                     imgDB = new RedisHelper(m_sImgDbId);                     //图像数据库ID
                     imgInfoDB = new RedisHelper(m_sInfoDbIdx);               //图像信息数据库ID
-                } catch {
-                    Thread.Sleep(1000); //若redis 无法连接则3分钟监听一次
+                    TYData = new RedisHelper(m_sTYDataId);                    //唐源数据匹配数据库  
+                } catch (Exception) {
+                    CallInfo?.Invoke("#[失败!]，2秒后重试！\n");
+                    Thread.Sleep(2000); //若redis 无法连接则10秒钟监听一次
                     continue;
                 }
-                //int ind = 0;
-                //while (true) {
-                //    StringBuilder sss = new StringBuilder();
-                //    string[] imgKeys = imgInfoDB.ListRange("list", _iImgInd, _iImgInd + 10000);
-                //    for (int i = 0; i < imgKeys.Length; i++) {
-
-                //        string imgKey = imgKeys[i];
-
-                //        string sJson = imgInfoDB.StringGet(imgKey);
-                //        if (string.IsNullOrEmpty(sJson)) {
-                //            continue;
-                //        }
-
-                //        //考虑一种情况，redis数据库崩溃了 丢失了很多图像， 中间很多定位信息无用直接跳过
-
-                //        //t: 132430543471152878  min 132430663964619500  max 
-                //        PicInfo picInfo = JsonHelper.GetModel<PicInfo>(sJson);
-                //        Int64 imgTimeStamp = picInfo.UTC;//ConvertUTC(imgKey);
-                //        sss.AppendLine($"id:{++ind},imgKey:{imgKey},CID:{picInfo.CID},UTC:{imgTimeStamp}" );
-
-                //    }
-
-                //    if (imgKeys.Length == 0) {
-                //        break;
-                //    }
-
-                //    _iImgInd += imgKeys.Length;
-                //    FileHelper.SaveTextFile("d:\\ImgKey.txt", sss.ToString(),true);
-                // }
-                //return;
-
-                CallInfo?.Invoke("--> 任务[开启信号]监听。。。。。。");
-                if (Settings.Default.ListenTask) { //需要监听任务是否开启
-                    string tastInfo = imgInfoDB.StringGet("tastInfo");
-
-                    if (!string.IsNullOrEmpty(tastInfo) && tastInfo.Equals("start")) {
-                        Task.Run(() => { TaskStart(); });
-                        break;
-                    }
-                    Thread.Sleep(10000); //1分钟监听一次
-                } else {
-                    //不监听任务字段，任务开启以唐源数据库是否访问作为依据
-                    Task.Run(() => { TaskStart(); });
-                    break;
-                }
+                break;
             }
-        }
-        /// <summary>
-        /// 开始任务 
-        /// </summary>
-        public void TaskStart() {
+
+            CallInfo?.Invoke("#[成功!]\n");
 
 
             CurrPoleNum = "";//任务开始 设置空杆号
-                             //MessageBox.Show("monogoDBIP:" + Settings.Default.mongoDbIp + " port" + Settings.Default.mongoDbPort);
 
-            _mongodb = new MongodbAccessImpl(Settings.Default.mongoDbIp, Settings.Default.mongoDbPort);
-            //  _mongodb = new MongodbAccessImpl("192.168.1.101", "26017");
-            //CallInfo?.Invoke("--> 任务[数据]监听（1分钟）。。。。。。");
+            //唐源数据 任务监听中。
             while (true) {
                 try {
+                    CallInfo?.Invoke("T#链接【任务服务器(数据库)】...... ");
                     bool flag = _mongodb.Connect();
                     if (flag) {
-                        CallInfo?.Invoke("--> 任务[数据]监听成功！");
+                        CallInfo?.Invoke("#[成功!]\n");
                         break;
                     }
-                    CallInfo?.Invoke("--> 任务[数据]监听（1分钟）。。。。。。");
-                    Thread.Sleep(10000); //若没有读取则1分钟后重新尝试   
+                    CallInfo?.Invoke("#[失败!]，10秒后重试！\n");
+                    Thread.Sleep(10000); //若没有读取则10秒后重新尝试
                 } catch {
-                    Thread.Sleep(3000); //若没有读取则1分钟后重新尝试
+                    CallInfo?.Invoke("#[失败!]，10秒后重试！\n");
+                    Thread.Sleep(10000); //若没有读取则10秒后重新尝试
                 }
-
             }
-
-            CallInfo?.Invoke("--> 任务[数据]监听成功！");
-            //while (true) {
-            //    if (_mongodb.Connect()) {
-            //        CallInfo?.Invoke("--> 任务[数据]监听成功！");
-            //        break;
-            //    }
-            //    CallInfo?.Invoke("--> 任务[数据]监听（1分钟）。。。。。。");
-            //    Thread.Sleep(1000); //若没有读取则1分钟后重新尝试               
-            //}
-
             //确保 数据库连接成功！
             TaskPath = string.Empty;
 
             //确保 MongoDB获取路径成功！
             while (true) {
-                CallInfo?.Invoke("--> 获取路径中。。。。。。");
-                Thread.Sleep(3000); //若没有读取则1分钟后重新尝试
+                CallInfo?.Invoke("T#任务监听->");
+                Thread.Sleep(5000); //若没有读取则5秒钟后重新尝试
                 TaskPath = _mongodb.GetFullDir();
                 if (string.IsNullOrEmpty(TaskPath)) {
-                    CallInfo?.Invoke("-->MongoDB路径获取失败！");
-                    Thread.Sleep(3000); //若没有读取则1分钟后重新尝试
+                    CallInfo?.Invoke("#[失败！]2秒后重试");
+                    Thread.Sleep(2000);
                     continue;
                 }
-                CallInfo?.Invoke("-->MongoDB路径获取成功！");
+                _taskName = ParseLineName(TaskPath);
+                CallInfo?.Invoke($"#[成功]\n\t[任务名称]：{_taskName}\n\t[任务路径]：{TaskPath}\n");
                 break;
+            }
+            //写入redis              
+            if (String.IsNullOrEmpty(_taskName)) {
+                TYData.StringSet("tarskInfo", _taskName);
+            }
+            if (Settings.Default.isDelAllDB) {
+                RedisHelper.ClearAllDB();//清除所有数据
             }
             CallInfo?.Invoke($"--> 任务开启: {TaskPath}");
             // MessageBox.Show("MongoDB路径读取成功！"+ TaskPath);
@@ -364,20 +331,46 @@ namespace OnePoleOneSave {
             lock (obj) {
                 queImgInfo = new Queue<ImgSaveNode>();
             }
-            if (Settings.Default.isDelAllDB) {
-                RedisHelper.ClearAllDB();//清除所有数据
-            }
+
             _iImgInd = 0;
             _iTotalSaveNum = 0;
             LogRecord();//日志数据记录
             isStop = false;//是否停止
             _taskRunning = true;//任务开始状态
-            //开启读取MongoDB数据库任务--不断识别存储节点信息（杆号+公里标）
+                                //开启读取MongoDB数据库任务--不断识别存储节点信息（杆号+公里标）
             Task TaskGetSaveNode = new Task(TaskGetPoleKM, _token);
             TaskGetSaveNode.Start();
             //开启读取Redis数据库中的图像任务--读取图像信息与存储节点进行匹配
             Task TaskSaveImg = new Task(TaskMatchImg, _token);
             TaskSaveImg.Start();
+        }
+        /// <summary>
+        /// 任务开启
+        /// </summary>
+        private void TaskStart() {
+
+        }
+        //获取线路名称
+        private string ParseLineName(string path) {
+            path = path.Trim();
+            if (path.EndsWith("\\") || path.EndsWith("/")) {
+                path = path.Substring(0, path.Length - 1);
+            }
+            string strRtn = path.Substring(path.LastIndexOf("\\"));
+            return strRtn;
+        }
+
+
+        /// <summary>
+        /// 写入任务信息到 redis
+        /// </summary>
+        private void WriteTastInfo() {
+        }
+        /// <summary>
+        /// 开始任务 
+        /// </summary>
+        public void TaskStart() {
+
 
 
         }
@@ -440,9 +433,9 @@ namespace OnePoleOneSave {
                 imgInfoDB.StringSet("saveImgNum", _iTotalSaveNum.ToString());
             } catch {
 
-                 
+
             }
-          
+
         }
 
     }
