@@ -22,8 +22,8 @@ namespace ComClassLib.DB {
         /// </summary>
         //private static readonly string ConnectionString;
 
-        private static readonly string ServIP;
-        private static readonly int Port;
+        public static readonly string ServIP;
+        public static readonly int Port;
         /// <summary>
         /// redis 连接对象
         /// </summary>
@@ -242,6 +242,11 @@ namespace ComClassLib.DB {
                 if (_connMultiplexer != null) {
                     _connMultiplexer.Dispose();
                 }
+                config = new ConfigurationOptions() {
+                    EndPoints = { { ServIP, Port } },
+                    AllowAdmin = true,
+                    ConnectTimeout = 1000 //超时设置1s
+                };
                 _connMultiplexer = ConnectionMultiplexer.Connect(config);
             }
 

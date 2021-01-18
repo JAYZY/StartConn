@@ -57,18 +57,20 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(13, 24);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(119, 14);
+            this.label1.Size = new System.Drawing.Size(148, 14);
             this.label1.TabIndex = 2;
-            this.label1.Text = "请输入退出密码：";
+            this.label1.Text = "请输入退出指令(008)：";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // tbPwd
             // 
             this.tbPwd.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tbPwd.Location = new System.Drawing.Point(132, 21);
+            this.tbPwd.Location = new System.Drawing.Point(152, 21);
             this.tbPwd.Name = "tbPwd";
             this.tbPwd.PasswordChar = '*';
-            this.tbPwd.Size = new System.Drawing.Size(236, 22);
+            this.tbPwd.Size = new System.Drawing.Size(216, 22);
             this.tbPwd.TabIndex = 3;
+            this.tbPwd.TextChanged += new System.EventHandler(this.tbPwd_TextChanged);
             // 
             // ExitWarning
             // 

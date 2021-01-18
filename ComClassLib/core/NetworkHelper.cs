@@ -9,6 +9,8 @@ namespace ComClassLib.core {
         private IPAddress Ipaddress;
         private IPEndPoint IpEnd;
         private Socket ConnSocket;
+        public string IP{ get { return Settings.Default.NetTarkServIP; } }
+        public int Port { get { return Settings.Default.NetTarkPort; } }
         public static Action<DataType.NetTaskCmd> CallFunc { get; set; } //回调函数
         // bool IsConnect;
         public NetworkHelper() {
@@ -35,7 +37,7 @@ namespace ComClassLib.core {
                 //Console.Write("Fail to connect server");
                 // Console.Write(e.ToString());
                 return false;
-            }
+            }            
             return true;
         }
 
@@ -64,6 +66,8 @@ namespace ComClassLib.core {
                         } else
                         if (2 == cmdState) {
                             CallFunc?.Invoke(DataType.NetTaskCmd.TaskEnd);
+                        } else {
+                            CallFunc?.Invoke(DataType.NetTaskCmd.Unknown);
                         }
                     }
                 } catch { }

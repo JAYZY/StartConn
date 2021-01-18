@@ -16,11 +16,11 @@ namespace OnePoleOneSave {
         }
 
         private void btnExit_Click(object sender, EventArgs e) {
-            if (tbPwd.Text.Equals("wytc")) {
+            if (tbPwd.Text.Equals("008")) {
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             } else {
-                ComClassLib.MsgBox.Error("密码错误，没有退出权限！");
+                ComClassLib.MsgBox.Error("退出指令错误，请重试！");
                 tbPwd.Text = "";
             }           
         }
@@ -28,6 +28,14 @@ namespace OnePoleOneSave {
         private void btnCancel_Click(object sender, EventArgs e) {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void label1_Click(object sender, EventArgs e) {
+
+        }
+
+        private void tbPwd_TextChanged(object sender, EventArgs e) {
+
         }
     }
 }

@@ -26,6 +26,8 @@ namespace OnePoleOneSave {
             TaskM.CallInfo = ShowTaskMsg;
             taskM = new TaskM();
             Task.Run(() => { taskM.ListenTask(); });
+
+
             //taskM.ListenTaskStart();       
         }
         #endregion
@@ -35,7 +37,7 @@ namespace OnePoleOneSave {
                 rTxtBoxTip.Invoke(a, sMsg);
             } else {
                 try {
-                    if (rTxtBoxTip.Lines.Length > 30) {
+                    if (rTxtBoxTip.Lines.Length > 80) {
                         int start = rTxtBoxTip.GetFirstCharIndexFromLine(0);//第一行第一个字符的bai索引du
                         int end = rTxtBoxTip.GetFirstCharIndexFromLine(1);//第二行第一个字符的索引
                         rTxtBoxTip.Select(start, end);//选中第一行
@@ -43,8 +45,12 @@ namespace OnePoleOneSave {
                     }
                     string[] tmpStr = sMsg.Split('#');
                     string sTip = "";
+
                     if (tmpStr[0].Equals("T")) {//添加时间
                         sTip = $"# {DateTime.Now.ToString()} : ";
+                    } else if (tmpStr[0].Equals("SP") ){
+                        llblTaskPath.Text = tmpStr[1];
+                        return;
                     }
                     sTip += tmpStr[1];
                     rTxtBoxTip.AppendText(sTip);
@@ -100,6 +106,10 @@ namespace OnePoleOneSave {
             imgNode.lstImgId.Add("3454592jsdf");
             string str = ComClassLib.FileOp.JsonHelper.GetJson(imgNode);
             MessageBox.Show(str);
+        }
+
+        private void llblTaskPath_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
+            System.Diagnostics.Process.Start(llblTaskPath.Text);      //打开目录
         }
     }
 }

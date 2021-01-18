@@ -32,6 +32,7 @@
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnClose = new System.Windows.Forms.Button();
+            this.llblTaskPath = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // label1
@@ -39,11 +40,11 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("微软雅黑", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.label1.ForeColor = System.Drawing.Color.Black;
-            this.label1.Location = new System.Drawing.Point(8, 8);
+            this.label1.Location = new System.Drawing.Point(-19, 8);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(206, 31);
             this.label1.TabIndex = 0;
-            this.label1.Text = "一杆一档后台服务";
+            this.label1.Text = "一杆一档服务程序";
             // 
             // btnMinium
             // 
@@ -95,12 +96,22 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // llblTaskPath
+            // 
+            this.llblTaskPath.AutoSize = true;
+            this.llblTaskPath.Location = new System.Drawing.Point(207, 23);
+            this.llblTaskPath.Name = "llblTaskPath";
+            this.llblTaskPath.Size = new System.Drawing.Size(0, 12);
+            this.llblTaskPath.TabIndex = 5;
+            this.llblTaskPath.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblTaskPath_LinkClicked);
+            // 
             // MainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(701, 314);
             this.ControlBox = false;
+            this.Controls.Add(this.llblTaskPath);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.rTxtBoxTip);
             this.Controls.Add(this.btnMinium);
@@ -109,7 +120,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainFrm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "# 一杆一档存储服务 #";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFrm_FormClosing);
             this.Shown += new System.EventHandler(this.MainFrm_Shown);
             this.ResumeLayout(false);
@@ -125,6 +135,7 @@
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.LinkLabel llblTaskPath;
     }
 }
 

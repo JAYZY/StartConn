@@ -118,7 +118,7 @@ namespace OnePoleOneSave {
                 List<BsonDocument> lstImgInfos = null;
                 bool IsConnMongoDb = true;
                 try {
-                    lstImgInfos = _mongodb.FindDataByLimit(imgTimeStamp, 100);//132429982497195159
+                    lstImgInfos = _mongodb.FindDataByLimit(imgTimeStamp, 1000);//132429982497195159
                 } catch {
                     //MongoDB数据库出错！
                     IsConnMongoDb = false;
@@ -145,6 +145,7 @@ namespace OnePoleOneSave {
                     continue;
                 }
                 #region 读取杆号
+
                 string sPoleNum, sStationName;
                 for (int i = 0; i < lstImgInfos.Count; i++) {
                     var imgInfo = lstImgInfos[i];
@@ -161,6 +162,8 @@ namespace OnePoleOneSave {
                         CurrStationName = sStationName;
                         //写入当前站名称
                         WriteTaskInfo("stationname", CurrStationName);
+
+                        CallInfo?.Invoke($"T#杆号起步读取!" + imgTimeStamp + "s" + lstImgInfos.Count + "条\n");
                         continue;
                     } else if (CurrPoleNum != sPoleNum) { //如果不相等 改变当前支柱号和 获取目录   
                         imgTimeStamp = imgInfo.GetValue("检测时间").AsInt64;
@@ -171,10 +174,12 @@ namespace OnePoleOneSave {
                             queImgInfo.Enqueue(imgNode);
                         }
 
+
                         imgNode = new ImgSaveNode();
                         imgNode.minImgTimeStamp = imgTimeStamp; //最小和最大有个重叠。
                         imgNode.StationName = CurrStationName;
                         imgNode.sKM_Pole = $"{imgInfo.GetValue("公里标（米）").ToString()}_{sPoleNum}"; //公里标_杆号
+                        CallInfo?.Invoke($"T#GYK+Pole" + imgNode.sKM_Pole + "\n");
                         imgNode.lstImgId = new List<string>();
                         break;
                     } else {
@@ -272,7 +277,7 @@ namespace OnePoleOneSave {
                         if (flag) {
                             //成功存储 进行计数
                             ++_iTotalSaveNum;
-                            CallInfo?.Invoke($"T#杆号：{imgNode.sKM_Pole} #共存储:{_iTotalSaveNum}条\n");
+                            CallInfo?.Invoke($"T#杆号：{imgNode.sKM_Pole} -- 共存储:{_iTotalSaveNum}条\n");
                         }
                     } else {
                         //当前图像信息时间戳>杆号记录点时间戳 垮杆了则重新获取imgTimeStamp>=imgNode.maxImgTimeStamp
@@ -294,7 +299,7 @@ namespace OnePoleOneSave {
                 } else {
                     _iImgInd += imgKeys.Length;
                     // LogRecord();//日志数据记录
-                    
+
                     //记录读取图像列表的下标
                     WriteTaskInfo("LstImgInd", _iImgInd.ToString());
                     //记录存储的图像总数量
@@ -316,13 +321,16 @@ namespace OnePoleOneSave {
                 }
                 //取消所有的Task
                 _tokenSource.Cancel();
-                CallInfo?.Invoke($"T#======任务【{_taskName}】结束======\n");
+                CallInfo?.Invoke($"T#======任务【{_taskName}】结束,30秒后重新监听任务======\n");
                 //写入任务状态
                 WriteTaskInfo("taskInfo", "over");
 
-                Thread.Sleep(60000);//任务结束后 1分钟以后再重新监听任务开始
+                Thread.Sleep(30000);//任务结束后 1分钟以后再重新监听任务开始
                 ListenTask();
             }
+            //else {
+            //    MsgBox.Show("T#接收信息为" + cmd.ToString()+"\n");
+            //}
         }
 
         /// <summary>
@@ -331,7 +339,7 @@ namespace OnePoleOneSave {
         private void ListenTaskStart() {
 
             #region Redis服务器和数据库状态
-            CallInfo?.Invoke("T#连接【吊弦】服务器(数据库)");
+            CallInfo?.Invoke("T#连接【吊弦】服务器(数据库):" + RedisHelper.ServIP);
             int tryNum = 0;
             while (true) {
                 try {
@@ -400,7 +408,13 @@ namespace OnePoleOneSave {
                     continue;
                 }
                 _taskName = ParseLineName(TaskPath);
+                if (!String.IsNullOrEmpty(Settings.Default.SavaImgPath)) {
+                    TaskPath = Path.Combine(Settings.Default.SavaImgPath, _taskName);
+                }
+
+                CallInfo?.Invoke($"SP#{TaskPath}\n");
                 CallInfo?.Invoke($"#[成功]\n\t[任务名称]：{_taskName}\n\t[任务路径]：{TaskPath}\n");
+                Thread.Sleep(1000);
                 break;
             }
             #endregion
@@ -411,7 +425,7 @@ namespace OnePoleOneSave {
             }
 
             //写入redis  任务信息            
-            if (String.IsNullOrEmpty(_taskName)) {
+            if (!String.IsNullOrEmpty(_taskName)) {
                 WriteTaskInfo("taskInfo", _taskName);
             }
 
@@ -453,6 +467,7 @@ namespace OnePoleOneSave {
             //同步的--任务开始监听后，再开始网络指令监听
             NetworkHelper.CallFunc = ListenTaskStop;
             NetworkHelper nw = new NetworkHelper();
+            CallInfo?.Invoke($"T#====== 开始网络任务监听：IP{nw.IP} Port:{nw.Port}\n");
             new Task(nw.Receive, _networkToken).Start(); //开启网络任务
         }
         public void StopAllTask() {
@@ -465,7 +480,7 @@ namespace OnePoleOneSave {
             if (path.EndsWith("\\") || path.EndsWith("/")) {
                 path = path.Substring(0, path.Length - 1);
             }
-            string strRtn = path.Substring(path.LastIndexOf("\\"));
+            string strRtn = path.Substring(path.LastIndexOf("\\") + 1);
             return strRtn;
         }
 

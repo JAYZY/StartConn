@@ -25,7 +25,7 @@ namespace ComClassLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.1.158")]
         public string DbServIP {
             get {
                 return ((string)(this["DbServIP"]));
@@ -49,7 +49,7 @@ namespace ComClassLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.1.102")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.1.101")]
         public string NetTarkServIP {
             get {
                 return ((string)(this["NetTarkServIP"]));
@@ -61,7 +61,7 @@ namespace ComClassLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("52313")]
+        [global::System.Configuration.DefaultSettingValueAttribute("52310")]
         public int NetTarkPort {
             get {
                 return ((int)(this["NetTarkPort"]));

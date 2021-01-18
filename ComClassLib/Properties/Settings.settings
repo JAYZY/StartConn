@@ -3,16 +3,16 @@
   <Profiles />
   <Settings>
     <Setting Name="DbServIP" Type="System.String" Scope="User">
-      <Value Profile="(Default)">127.0.0.1</Value>
+      <Value Profile="(Default)">192.168.1.158</Value>
     </Setting>
     <Setting Name="Port" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">6379</Value>
     </Setting>
     <Setting Name="NetTarkServIP" Type="System.String" Scope="User">
-      <Value Profile="(Default)">192.168.1.102</Value>
+      <Value Profile="(Default)">192.168.1.101</Value>
     </Setting>
     <Setting Name="NetTarkPort" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">52313</Value>
+      <Value Profile="(Default)">52310</Value>
     </Setting>
   </Settings>
 </SettingsFile>

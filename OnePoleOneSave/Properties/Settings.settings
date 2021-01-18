@@ -17,5 +17,8 @@
     <Setting Name="ListenTask" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="SavaImgPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">E:\ImageData\4C</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

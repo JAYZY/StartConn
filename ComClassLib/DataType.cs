@@ -8,7 +8,8 @@
             Conn,
             Reconn,
             TaskStart,
-            TaskEnd
+            TaskEnd,
+            Unknown
 
         }
     }

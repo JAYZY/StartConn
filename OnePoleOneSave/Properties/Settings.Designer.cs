@@ -82,5 +82,17 @@ namespace OnePoleOneSave.Properties {
                 this["ListenTask"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("E:\\ImageData\\4C")]
+        public string SavaImgPath {
+            get {
+                return ((string)(this["SavaImgPath"]));
+            }
+            set {
+                this["SavaImgPath"] = value;
+            }
+        }
     }
 }
