@@ -221,7 +221,6 @@ namespace OnePoleOneSave {
                             }
                         }
                         string lsImgInd = TYData.StringGet("LstImgInd");
-
                         if (string.IsNullOrEmpty(lsImgInd)) {
                             _iImgInd = 0;
                         }
@@ -536,7 +535,7 @@ namespace OnePoleOneSave {
         //获取图像名称 命名规则：  //时间_k公里标_杆号_区域编号_相机编号   
         private string GetImgName(string sTimeKey, string cid, string sKMPole) {
             string imgName = $"{sTimeKey.Substring(6, 2)}{sTimeKey.Substring(8, 2)}{sTimeKey.Substring(10, 2)}{sTimeKey.Substring(12, 3)}" +
-                $"_K{sKMPole}_5_{cid}.jpg";
+                $"_K{sKMPole}_{Settings.Default.ImgRegionID}_{cid}.jpg";
             return imgName;
         }
 

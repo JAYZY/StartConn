@@ -20,5 +20,8 @@
     <Setting Name="SavaImgPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">E:\ImageData\4C</Value>
     </Setting>
+    <Setting Name="ImgRegionID" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">2</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
