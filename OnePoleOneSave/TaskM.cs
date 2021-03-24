@@ -100,9 +100,9 @@ namespace OnePoleOneSave {
             _networkToken = _networkTokenSource.Token;
 
             _networkResetEvent = new ManualResetEvent(true);
-
+            CallInfo?.Invoke($"T#任务数据库IP{Settings.Default.mongoDbIp},端口：{Settings.Default.mongoDbPort}\n");
             _mongodb = new MongodbAccessImpl(Settings.Default.mongoDbIp, Settings.Default.mongoDbPort);
-            _taskRunning = false;
+            _taskRunning = false; 
         }
 
         bool isStop = false;
@@ -116,7 +116,7 @@ namespace OnePoleOneSave {
             while (_taskRunning) {
                 //找到比当前时间戳大的定位信息132430780599149500 132430780617149500 132430780678989500 132430780696989500
                 List<BsonDocument> lstImgInfos = null;
-                bool IsConnMongoDb = true;
+                bool IsConnMongoDb = true;                                                                                                                                                                                                                                                
                 try {
                     lstImgInfos = _mongodb.FindDataByLimit(imgTimeStamp, 1000);//132429982497195159
                 } catch {
